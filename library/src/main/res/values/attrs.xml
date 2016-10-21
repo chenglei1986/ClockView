@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ClockView">
+        <attr name="clockFaceColor" format="color"/>
+        <attr name="outerRimColor" format="color"/>
+        <attr name="innerRimColor" format="color"/>
+        <attr name="thickMarkerColor" format="color"/>
+        <attr name="thinMarkerColor" format="color"/>
+        <attr name="numberTextColor" format="color"/>
+        <attr name="hourHandColor" format="color"/>
+        <attr name="minuteHandColor" format="color"/>
+        <attr name="sweepHandColor" format="color"/>
+
+        <attr name="outerRimWidth" format="dimension"/>
+        <attr name="innerRimWidth" format="dimension"/>
+        <attr name="thickMarkerWidth" format="dimension"/>
+        <attr name="thinMarkerWidth" format="dimension"/>
+        <attr name="numberTextSize" format="dimension"/>
+        <attr name="hourHandWidth" format="dimension"/>
+        <attr name="minuteHandWidth" format="dimension"/>
+        <attr name="sweepHandWidth" format="dimension"/>
+
+        <attr name="showThickMarkers" format="boolean"/>
+        <attr name="showThinMarkers" format="boolean"/>
+        <attr name="showNumbers" format="boolean"/>
+        <attr name="showSweepHand" format="boolean"/>
+    </declare-styleable>
+</resources>
