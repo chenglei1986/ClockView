@@ -30,6 +30,7 @@ public class ClockView extends View {
     private static final float DEFAULT_OUTER_RIM_WIDTH = dipToPx(1);
     private static final float DEFAULT_INNER_RIM_WIDTH = dipToPx(1);
     private static final float DEFAULT_THICK_MARKER_WIDTH = dipToPx(3);
+    private static final float DEFAULT_THICK_MARKER_LENGTH = dipToPx(15);
     private static final float DEFAULT_THIN_MARKER_WIDTH = dipToPx(1);
     private static final float DEFAULT_NUMBER_TEXT_SIZE = dipToPx(18);
     private static final float DEFAULT_HOUR_HAND_WIDTH = dipToPx(5);
@@ -204,14 +205,26 @@ public class ClockView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.save();
         canvas.translate(mPaintRect.centerX(), mPaintRect.centerY());
-        drawBoarder(canvas);
-        canvas.restore();
+        drawClockFace(canvas);
+        drawThickMarkers(canvas);
     }
 
-    private void drawBoarder(Canvas canvas) {
+    private void drawClockFace(Canvas canvas) {
         canvas.drawCircle(0, 0, mPaintRect.width() / 2, mColckFacePaint);
+    }
+
+    private void drawThickMarkers(Canvas canvas) {
+        int radius = mPaintRect.width() / 2;
+        for (int degree = 0; degree < 360; degree += 30) {
+            double radian = degree * Math.PI / 180;
+            canvas.drawLine(
+                    radius * (float)Math.cos(radian),
+                    radius * (float)Math.sin(radian),
+                    (radius - DEFAULT_THICK_MARKER_LENGTH) * (float)Math.cos(radian),
+                    (radius - DEFAULT_THICK_MARKER_LENGTH) * (float)Math.sin(radian),
+                    mThickMarkerPaint);
+        }
     }
 
     private static float dipToPx(float dipValue) {
