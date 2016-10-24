@@ -10,6 +10,7 @@
         <attr name="hourHandColor" format="color"/>
         <attr name="minuteHandColor" format="color"/>
         <attr name="sweepHandColor" format="color"/>
+        <attr name="centerCircleColor" format="color"/>
 
         <attr name="outerRimWidth" format="dimension"/>
         <attr name="innerRimWidth" format="dimension"/>
@@ -19,10 +20,15 @@
         <attr name="hourHandWidth" format="dimension"/>
         <attr name="minuteHandWidth" format="dimension"/>
         <attr name="sweepHandWidth" format="dimension"/>
+        <attr name="centerCircleRadius" format="dimension"/>
 
         <attr name="showThickMarkers" format="boolean"/>
         <attr name="showThinMarkers" format="boolean"/>
         <attr name="showNumbers" format="boolean"/>
         <attr name="showSweepHand" format="boolean"/>
+
+        <attr name="language" format="string"/>
+        <attr name="country" format="string"/>
+
     </declare-styleable>
 </resources>
