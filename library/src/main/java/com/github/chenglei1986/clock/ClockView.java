@@ -1,5 +1,8 @@
 package com.github.chenglei1986.clock;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -12,11 +15,11 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
+import java.util.TimeZone;
 
 public class ClockView extends View {
 
@@ -33,6 +36,8 @@ public class ClockView extends View {
     private static final int DEFAULT_MINUTE_HAND_COLOR = Color.BLACK;
     private static final int DEFAULT_SWEEP_HAND_COLOR = Color.BLACK;
     private static final int DEFAULT_CENTER_CIRCLE_COLOR = Color.BLACK;
+    private static final int DEFAULT_ANIMATION_DURATION_MILLI = 1200;
+    private static final int DEFAULT_ANIM_START_DELAY_MILLI = 500;
 
     private static final float DEFAULT_OUTER_RIM_WIDTH = dipToPx(1);
     private static final float DEFAULT_INNER_RIM_WIDTH = dipToPx(1);
@@ -71,11 +76,15 @@ public class ClockView extends View {
     private boolean mShowThinMarkers = true;
     private boolean mShowNumbers = true;
     private boolean mShowSweepHand = true;
+    private boolean mAnimationPlayed = false;
 
     private int mMinWidth = (int) dipToPx(MIN_WIDTH_DP);
     private int mMinHeight = (int) dipToPx(MIN_HEIGHT_DP);
 
     private Rect mPaintRect = new Rect();
+    private int mRefreshRectLeft, mRefreshRectTop, mRefreshRectRight, mRefreshRectBottom;
+    private float mHour, mMinute, mSecond;
+    private int mMilliSecond;
 
     private Paint mColckFacePaint = new Paint();
     private Paint mOuterRimPaint = new Paint();
@@ -88,9 +97,10 @@ public class ClockView extends View {
     private Paint mSweepHandpaint = new Paint();
     private Paint mCenterCirclePaint = new Paint();
 
-    private Locale mLocal;
-    private String mLanguage;
-    private String mCountry;
+    private TimeZone mTimeZone;
+    private String mTimeZoneId;
+
+    private Calendar mCalendar;
 
     public ClockView(Context context) {
         this(context, null);
@@ -102,8 +112,7 @@ public class ClockView extends View {
 
     public ClockView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initAttributes(context, attrs);
-        init();
+        init(context, attrs);
     }
 
     private void initAttributes(Context context, AttributeSet attrs) {
@@ -134,18 +143,19 @@ public class ClockView extends View {
         mShowNumbers = attr.getBoolean(R.styleable.ClockView_showNumbers, mShowNumbers);
         mShowSweepHand = attr.getBoolean(R.styleable.ClockView_showSweepHand, mShowSweepHand);
 
-        mLanguage = attr.getString(R.styleable.ClockView_language);
-        mCountry = attr.getString(R.styleable.ClockView_country);
-        if (!TextUtils.isEmpty(mLanguage)) {
-            mLocal = new Locale(mLanguage, mCountry);
+        mTimeZoneId = attr.getString(R.styleable.ClockView_timeZoneId);
+        if (!TextUtils.isEmpty(mTimeZoneId)) {
+            mTimeZone = TimeZone.getTimeZone(mTimeZoneId);
         } else {
-            mLocal = Locale.getDefault();
+            mTimeZone = TimeZone.getDefault();
         }
         attr.recycle();
     }
 
-    private void init() {
+    private void init(Context context, AttributeSet attrs) {
+        initAttributes(context, attrs);
         initPaint();
+        initAnimation();
     }
 
     private void initPaint() {
@@ -198,6 +208,72 @@ public class ClockView extends View {
         mCenterCirclePaint.setStyle(Paint.Style.FILL);
     }
 
+    private void initAnimation() {
+        mCalendar = Calendar.getInstance(mTimeZone);
+        float hour = mCalendar.get(Calendar.HOUR);
+        float minute = mCalendar.get(Calendar.MINUTE);
+        float second = mCalendar.get(Calendar.SECOND) + (DEFAULT_ANIMATION_DURATION_MILLI + DEFAULT_ANIM_START_DELAY_MILLI) / 1000.0f;
+        int milliSecond = (int) (1000 * second + mCalendar.get(Calendar.MILLISECOND));
+        ValueAnimator hourAnimator = ValueAnimator.ofFloat(0, hour);
+        ValueAnimator minuteAnimator = ValueAnimator.ofFloat(0, minute);
+        ValueAnimator secondAnimator = ValueAnimator.ofFloat(0, second);
+        ValueAnimator milliSecondAnimator = ValueAnimator.ofInt(0, milliSecond);
+
+        hourAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mHour = (float) animation.getAnimatedValue();
+            }
+        });
+        minuteAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mMinute = (float) animation.getAnimatedValue();
+            }
+        });
+        secondAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mSecond = (float) animation.getAnimatedValue();
+            }
+        });
+        milliSecondAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mMilliSecond = (int) animation.getAnimatedValue();
+            }
+        });
+
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(hourAnimator, minuteAnimator, secondAnimator, milliSecondAnimator);
+        set.setDuration(DEFAULT_ANIMATION_DURATION_MILLI);
+        set.setInterpolator(new AccelerateDecelerateInterpolator());
+        set.addListener(new AnimatorSet.AnimatorListener() {
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mAnimationPlayed = false;
+                invalidate();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mAnimationPlayed = true;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                mAnimationPlayed = true;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+            }
+        });
+        set.setStartDelay(DEFAULT_ANIM_START_DELAY_MILLI);
+        set.start();
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
@@ -239,27 +315,33 @@ public class ClockView extends View {
         canvas.translate(mPaintRect.centerX(), mPaintRect.centerY());
         drawClockFace(canvas);
         drawOuterRim(canvas);
-        drawThickMarkers(canvas);
-        drawThinMarkers(canvas);
-        drawNumbers(canvas);
+        if (mShowThickMarkers) {
+            drawThickMarkers(canvas);
+        }
+        if (mShowThinMarkers) {
+            drawThinMarkers(canvas);
+        }
+        if (mShowNumbers) {
+            drawNumbers(canvas);
+        }
         drawInnerRim(canvas);
 
-        Calendar calendar = Calendar.getInstance(mLocal);
-        int hour = calendar.get(Calendar.HOUR);
-        int minute = calendar.get(Calendar.MINUTE);
-        int second = calendar.get(Calendar.SECOND);
-        int milliSecond = calendar.get(Calendar.MILLISECOND);
-        drawHourHand(canvas, hour, minute, second);
-        drawMinuteHand(canvas, minute, second);
-        drawSweepHand(canvas, second * 1000 + milliSecond);
+        if (mAnimationPlayed) {
+            mCalendar = Calendar.getInstance(mTimeZone);
+            mHour = mCalendar.get(Calendar.HOUR);
+            mMinute = mCalendar.get(Calendar.MINUTE);
+            mSecond = mCalendar.get(Calendar.SECOND);
+            mMilliSecond = (int) (1000 * mSecond + mCalendar.get(Calendar.MILLISECOND));
+        }
+
+        drawHourHand(canvas, mHour, mMinute, mSecond);
+        drawMinuteHand(canvas, mMinute, mSecond);
+        if (mShowSweepHand) {
+            drawSweepHand(canvas, mMilliSecond);
+        }
         canvas.drawCircle(0, 0, mCenterCircleRadius, mCenterCirclePaint);
 
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                invalidate();
-            }
-        }, 50);
+        postInvalidate(mRefreshRectLeft - 1, mRefreshRectTop - 1, mRefreshRectRight + 1, mRefreshRectBottom + 1);
     }
 
     private void drawClockFace(Canvas canvas) {
@@ -321,37 +403,44 @@ public class ClockView extends View {
         canvas.drawCircle(0, 0, radius - DEFAULT_THICK_MARKER_LENGTH - numberHeight - fm.bottom, mInnerRimPaint);
     }
 
-    private void drawHourHand(Canvas canvas, int hour, int minute, int second) {
+    private void drawHourHand(Canvas canvas, float hour, float minute, float second) {
         Paint.FontMetrics fm = mNumberPaint.getFontMetrics();
         float numberHeight = -fm.ascent + fm.descent;
         int radius = (int) (mPaintRect.width() / 2 - DEFAULT_THICK_MARKER_LENGTH - numberHeight - fm.bottom - dipToPx(5));
         double radian = (hour - 3) * Math.PI / 6 + minute * Math.PI / 360 + second * Math.PI / 21600;
-        canvas.drawLine(0, 0,
-                radius * (float)Math.cos(radian),
-                radius * (float)Math.sin(radian),
-                mHourHandPaint);
+        float stopX = radius * (float)Math.cos(radian);
+        float stopY = radius * (float)Math.sin(radian);
+        canvas.drawLine(0, 0, stopX, stopY, mHourHandPaint);
+        setRefreshRectCoordinates((int)stopX, (int)stopY);
     }
 
-    private void drawMinuteHand(Canvas canvas, int minute, int second) {
+    private void drawMinuteHand(Canvas canvas, float minute, float second) {
         int radius = (int) (mPaintRect.width() / 2 - DEFAULT_THIN_MARKER_LENGTH);
         double radian = (minute - 15) * Math.PI / 30 + second * Math.PI / 1800;
-        canvas.drawLine(0, 0,
-                radius * (float)Math.cos(radian),
-                radius * (float)Math.sin(radian),
-                mMinuteHandPaint);
+        float stopX = radius * (float)Math.cos(radian);
+        float stopY = radius * (float)Math.sin(radian);
+        canvas.drawLine(0, 0, stopX, stopY, mMinuteHandPaint);
+        setRefreshRectCoordinates((int)stopX, (int)stopY);
     }
 
     private void drawSweepHand(Canvas canvas, int milliSecond) {
         int radius = mPaintRect.width() / 2;
         double radian = (milliSecond - 15000) * Math.PI / 30000;
-        canvas.drawLine(0, 0,
-                radius * (float)Math.cos(radian),
-                radius * (float)Math.sin(radian),
-                mSweepHandpaint);
+        float stopX = radius * (float)Math.cos(radian);
+        float stopY = radius * (float)Math.sin(radian);
+        canvas.drawLine(0, 0, stopX, stopY, mSweepHandpaint);
+        setRefreshRectCoordinates((int)stopX, (int)stopY);
     }
 
     private static float dipToPx(float dipValue) {
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue,
                 Resources.getSystem().getDisplayMetrics());
+    }
+
+    private void setRefreshRectCoordinates(int x, int y) {
+        mRefreshRectLeft = Math.min(mRefreshRectLeft, x);
+        mRefreshRectTop = Math.min(mRefreshRectTop, y);
+        mRefreshRectRight = Math.max(mRefreshRectRight, x);
+        mRefreshRectBottom = Math.max(mRefreshRectBottom, y);
     }
 }

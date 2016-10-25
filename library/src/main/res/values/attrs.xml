@@ -27,8 +27,7 @@
         <attr name="showNumbers" format="boolean"/>
         <attr name="showSweepHand" format="boolean"/>
 
-        <attr name="language" format="string"/>
-        <attr name="country" format="string"/>
+        <attr name="timeZoneId" format="string"/>
 
     </declare-styleable>
 </resources>
