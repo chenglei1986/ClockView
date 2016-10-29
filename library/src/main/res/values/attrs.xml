@@ -26,8 +26,14 @@
         <attr name="showThinMarkers" format="boolean"/>
         <attr name="showNumbers" format="boolean"/>
         <attr name="showSweepHand" format="boolean"/>
+        <attr name="animation" format="boolean"/>
 
         <attr name="timeZoneId" format="string"/>
+
+        <attr name="numberType" format="enum">
+            <enum name="arabic" value="0"/>
+            <enum name="roman" value="1"/>
+        </attr>
 
     </declare-styleable>
 </resources>

@@ -13,12 +13,14 @@ import android.graphics.Rect;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Locale;
+import java.util.HashMap;
 import java.util.TimeZone;
 
 public class ClockView extends View {
@@ -76,7 +78,10 @@ public class ClockView extends View {
     private boolean mShowThinMarkers = true;
     private boolean mShowNumbers = true;
     private boolean mShowSweepHand = true;
-    private boolean mAnimationPlayed = false;
+    private boolean mAnimationPlayed = true;
+    private boolean mAnimation = true;
+
+    private NumberType mNumberType;
 
     private int mMinWidth = (int) dipToPx(MIN_WIDTH_DP);
     private int mMinHeight = (int) dipToPx(MIN_HEIGHT_DP);
@@ -94,13 +99,17 @@ public class ClockView extends View {
     private TextPaint mNumberPaint = new TextPaint();
     private Paint mHourHandPaint = new Paint();
     private Paint mMinuteHandPaint = new Paint();
-    private Paint mSweepHandpaint = new Paint();
+    private Paint mSweepHandPaint = new Paint();
     private Paint mCenterCirclePaint = new Paint();
 
     private TimeZone mTimeZone;
     private String mTimeZoneId;
 
     private Calendar mCalendar;
+
+    private enum NumberType {
+        ARABIC, ROMAN
+    }
 
     public ClockView(Context context) {
         this(context, null);
@@ -142,8 +151,11 @@ public class ClockView extends View {
         mShowThinMarkers = attr.getBoolean(R.styleable.ClockView_showThinMarkers, mShowThinMarkers);
         mShowNumbers = attr.getBoolean(R.styleable.ClockView_showNumbers, mShowNumbers);
         mShowSweepHand = attr.getBoolean(R.styleable.ClockView_showSweepHand, mShowSweepHand);
+        mAnimation = attr.getBoolean(R.styleable.ClockView_animation, mAnimation);
 
         mTimeZoneId = attr.getString(R.styleable.ClockView_timeZoneId);
+        mNumberType = NumberType.values()[attr.getInt(R.styleable.ClockView_numberType, 0)];
+
         if (!TextUtils.isEmpty(mTimeZoneId)) {
             mTimeZone = TimeZone.getTimeZone(mTimeZoneId);
         } else {
@@ -155,7 +167,9 @@ public class ClockView extends View {
     private void init(Context context, AttributeSet attrs) {
         initAttributes(context, attrs);
         initPaint();
-        initAnimation();
+        if (mAnimation) {
+            initAnimation();
+        }
     }
 
     private void initPaint() {
@@ -198,10 +212,10 @@ public class ClockView extends View {
         mMinuteHandPaint.setStyle(Paint.Style.STROKE);
         mMinuteHandPaint.setStrokeWidth(mMinuteHandWidth);
 
-        mSweepHandpaint.setAntiAlias(true);
-        mSweepHandpaint.setColor(mSweepHandColor);
-        mSweepHandpaint.setStyle(Paint.Style.STROKE);
-        mSweepHandpaint.setStrokeWidth(mSweepHandWidth);
+        mSweepHandPaint.setAntiAlias(true);
+        mSweepHandPaint.setColor(mSweepHandColor);
+        mSweepHandPaint.setStyle(Paint.Style.STROKE);
+        mSweepHandPaint.setStrokeWidth(mSweepHandWidth);
 
         mCenterCirclePaint.setAntiAlias(true);
         mCenterCirclePaint.setColor(mCenterCircleColor);
@@ -326,7 +340,7 @@ public class ClockView extends View {
         }
         drawInnerRim(canvas);
 
-        if (mAnimationPlayed) {
+        if (mAnimationPlayed || !mAnimation) {
             mCalendar = Calendar.getInstance(mTimeZone);
             mHour = mCalendar.get(Calendar.HOUR);
             mMinute = mCalendar.get(Calendar.MINUTE);
@@ -341,7 +355,16 @@ public class ClockView extends View {
         }
         canvas.drawCircle(0, 0, mCenterCircleRadius, mCenterCirclePaint);
 
-        postInvalidate(mRefreshRectLeft - 1, mRefreshRectTop - 1, mRefreshRectRight + 1, mRefreshRectBottom + 1);
+        if (mAnimation && !mAnimationPlayed) {
+            postInvalidate();
+        } else {
+            postInvalidate(
+                    mRefreshRectLeft + mPaintRect.centerX() - (int) mThickMarkerWidth,
+                    mRefreshRectTop + mPaintRect.centerY() - (int) mThickMarkerWidth,
+                    mRefreshRectRight + mPaintRect.centerX() + (int) mThickMarkerWidth,
+                    mRefreshRectBottom + mPaintRect.centerY() + (int) mThickMarkerWidth);
+            mRefreshRectLeft = mRefreshRectRight = mRefreshRectTop = mRefreshRectBottom = 0;
+        }
     }
 
     private void drawClockFace(Canvas canvas) {
@@ -384,12 +407,18 @@ public class ClockView extends View {
 
     private void drawNumbers(Canvas canvas) {
         int radius = mPaintRect.width() / 2;
-        int number = 1;
+        int number = 0;
         Paint.FontMetrics fm = mNumberPaint.getFontMetrics();
         float numberHeight = -fm.ascent + fm.descent;
         for (int degree = -60; degree < 300; degree += 30) {
             double radian = degree * Math.PI / 180;
-            canvas.drawText(String.valueOf(number++),
+            String numberText;
+            if (mNumberType == NumberType.ROMAN) {
+                numberText = formatRomanNumber(number++);
+            } else {
+                numberText = String.valueOf(++number);
+            }
+            canvas.drawText(numberText,
                     (radius - DEFAULT_THICK_MARKER_LENGTH - numberHeight / 2) * (float)Math.cos(radian),
                     (radius - DEFAULT_THICK_MARKER_LENGTH - numberHeight / 2) * (float)Math.sin(radian) - (fm.ascent + fm.descent) / 2,
                     mNumberPaint);
@@ -415,7 +444,7 @@ public class ClockView extends View {
     }
 
     private void drawMinuteHand(Canvas canvas, float minute, float second) {
-        int radius = (int) (mPaintRect.width() / 2 - DEFAULT_THIN_MARKER_LENGTH);
+        int radius = (int) (mPaintRect.width() / 2 - DEFAULT_THIN_MARKER_LENGTH - dipToPx(5));
         double radian = (minute - 15) * Math.PI / 30 + second * Math.PI / 1800;
         float stopX = radius * (float)Math.cos(radian);
         float stopY = radius * (float)Math.sin(radian);
@@ -428,7 +457,7 @@ public class ClockView extends View {
         double radian = (milliSecond - 15000) * Math.PI / 30000;
         float stopX = radius * (float)Math.cos(radian);
         float stopY = radius * (float)Math.sin(radian);
-        canvas.drawLine(0, 0, stopX, stopY, mSweepHandpaint);
+        canvas.drawLine(0, 0, stopX, stopY, mSweepHandPaint);
         setRefreshRectCoordinates((int)stopX, (int)stopY);
     }
 
@@ -443,4 +472,12 @@ public class ClockView extends View {
         mRefreshRectRight = Math.max(mRefreshRectRight, x);
         mRefreshRectBottom = Math.max(mRefreshRectBottom, y);
     }
+
+    private String formatRomanNumber(int number) {
+        return ROMAN_NUMBER_LIST[number];
+    }
+
+    private static final String[] ROMAN_NUMBER_LIST = {
+            "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ",
+            "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ"};
 }

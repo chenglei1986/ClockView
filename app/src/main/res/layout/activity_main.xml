@@ -1,59 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    android:id="@+id/activity_main"
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.github.chenglei1986.clock.sample.MainActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+<com.github.chenglei1986.clock.ClockView
+    android:layout_width="200dp"
+    android:layout_height="200dp"
+    app:animation="true"
+    app:centerCircleColor="#D31231"
+    app:centerCircleRadius="5dp"
+    app:clockFaceColor="#A9ADB0"
+    app:hourHandColor="#000000"
+    app:hourHandWidth="5dp"
+    app:innerRimColor="#333333"
+    app:innerRimWidth="1.5dp"
+    app:minuteHandColor="#333333"
+    app:minuteHandWidth="3dp"
+    app:numberTextColor="#333333"
+    app:numberTextSize="16dp"
+    app:numberType="arabic"
+    app:outerRimColor="#333333"
+    app:outerRimWidth="2dp"
+    app:showNumbers="true"
+    app:showSweepHand="true"
+    app:showThickMarkers="true"
+    app:showThinMarkers="true"
+    app:sweepHandColor="#D31231"
+    app:sweepHandWidth="1dp"
+    app:thickMarkerColor="#333333"
+    app:thickMarkerWidth="3dp"
+    app:thinMarkerColor="#333333"
+    app:thinMarkerWidth="1dp"
+    app:timeZoneId="GMT+8"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="GMT+8"
+            android:textSize="18dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#222222"
+        android:gravity="center"
         android:orientation="vertical">
 
         <com.github.chenglei1986.clock.ClockView
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:layout_marginTop="16dp"
-            android:layout_weight="1"
+            app:animation="true"
             app:centerCircleColor="#D31231"
-            app:innerRimWidth="1.5dp"
-            app:outerRimWidth="2dp"
-            app:sweepHandColor="#D31231"
-            app:timeZoneId="GMT+8"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="GMT+8"/>
-
-        <com.github.chenglei1986.clock.ClockView
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_marginTop="16dp"
-            android:layout_weight="1"
-            app:hourHandColor="#EEEEEE"
-            app:minuteHandColor="#EEEEEE"
-            app:centerCircleColor="#D31231"
+            app:centerCircleRadius="5dp"
             app:clockFaceColor="#333333"
+            app:hourHandColor="#EEEEEE"
+            app:hourHandWidth="5dp"
             app:innerRimColor="#FFFFFF"
             app:innerRimWidth="1.5dp"
+            app:minuteHandColor="#EEEEEE"
+            app:minuteHandWidth="3dp"
             app:numberTextColor="#FFFFFF"
+            app:numberTextSize="16dp"
+            app:numberType="roman"
             app:outerRimColor="#FFFFFF"
             app:outerRimWidth="2dp"
+            app:showNumbers="true"
+            app:showSweepHand="true"
+            app:showThickMarkers="true"
+            app:showThinMarkers="true"
             app:sweepHandColor="#D31231"
+            app:sweepHandWidth="1dp"
             app:thickMarkerColor="#FFFFFF"
+            app:thickMarkerWidth="3dp"
             app:thinMarkerColor="#FFFFFF"
+            app:thinMarkerWidth="1dp"
             app:timeZoneId="America/Los_Angeles"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="America/Los_Angeles"/>
+            android:layout_marginTop="8dp"
+            android:text="America/Los_Angeles"
+            android:textColor="#FFFFFF"
+            android:textSize="18dp"/>
 
     </LinearLayout>
 
-</ScrollView>
+</LinearLayout>
