@@ -414,7 +414,7 @@ public class ClockView extends View {
             double radian = degree * Math.PI / 180;
             String numberText;
             if (mNumberType == NumberType.ROMAN) {
-                numberText = formatRomanNumber(number++);
+                numberText = convertToRomanNumber(number++);
             } else {
                 numberText = String.valueOf(++number);
             }
@@ -473,7 +473,7 @@ public class ClockView extends View {
         mRefreshRectBottom = Math.max(mRefreshRectBottom, y);
     }
 
-    private String formatRomanNumber(int number) {
+    private String convertToRomanNumber(int number) {
         return ROMAN_NUMBER_LIST[number];
     }
 
